@@ -1,0 +1,30 @@
+name: Build (Python 3.11)
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+        -   uses: actions/checkout@v6
+        -   name: Install uv
+            uses: astral-sh/setup-uv@v7
+            with:
+                enable-cache: true
+                python-version: "3.11"
+
+        # Run build pipeline
+        -   name: Build package
+            run: uv build
+
+        # Check package
+        -   name: Check package
+            run: uvx twine check --strict dist/*.whl

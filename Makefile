@@ -1,0 +1,68 @@
+
+# Declare global variables
+
+BASE_DIR		= ${PWD}
+
+TEST_DIR		= $(BASE_DIR)/tests
+
+UV_OPT			= uv
+UV_RUN_OPT		= $(UV_OPT) run
+PYTHON_OPT		= $(UV_RUN_OPT) python
+TY_OPT			= $(UV_RUN_OPT) ty
+TEST_OPT		= $(UV_RUN_OPT) pytest
+TWINE_OPT		= $(UV_RUN_OPT) twine
+SPHINX_OPT		= $(PYTHON_OPT) -m sphinx
+RUFF_OPT		= $(UV_RUN_OPT) ruff
+PRE_COMMIT_OPT	= $(UV_RUN_OPT) pre-commit
+
+
+# Run help by default
+.DEFAULT_GOAL := help
+
+.PHONY : help
+help: ## This help.
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+
+
+
+.PHONY : install
+install: ## install all python dependencies
+
+# Install dev dependencies
+	@$(UV_OPT) sync --all-extras
+
+
+
+
+.PHONY : build
+build: ## Twine package upload and checks
+
+	@$(UV_OPT) build
+
+# Check package using twine
+	@$(TWINE_OPT) check --strict ./dist/*
+
+
+
+
+.PHONY : format
+format: ## Lint and format code with flake8 and black
+	@$(RUFF_OPT) format
+	@$(RUFF_OPT) check --fix
+
+
+.PHONY: testing
+testing: ## Unittest of package
+	@$(TEST_OPT)
+
+
+.PHONY: typing
+typing: ## Run static code analysis
+	@$(TY_OPT) check
+
+
+
+.PHONY: check ## Run all checks (always before committing!)
+check: install format typing testing build
+

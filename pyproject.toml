@@ -1,0 +1,99 @@
+[build-system]
+build-backend = "uv_build"
+requires = [ "uv-build>=0.9.28,<0.10" ]
+
+[project]
+name = "dtangle"
+version = "0.1.0"
+description = "Python implementation of dtangle (Deconvolution of microarray and bulk RNASeq data)"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = "GPL-3.0-or-later"
+maintainers = [ { name = "harryhaller001", email = "harryhaller001@gmail.com" } ]
+authors = [ { name = "harryhaller001", email = "harryhaller001@gmail.com" } ]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+dependencies = [ "anndata>=0.12.10", "numpy>=2.4.3", "pandas>=2.3.3", "scipy>=1.17.1" ]
+optional-dependencies.docs = [
+    "ipython",                  # Required for syntax highlighing (https://github.com/spatialaudio/nbsphinx/issues/24)
+    "myst-parser",
+    "nbsphinx",
+    "sphinx",
+    "sphinx-autoapi",
+    "sphinx-autodoc-typehints",
+    "sphinx-book-theme",
+]
+optional-dependencies.test = [
+    "ipykernel",
+    "ipython",
+    "ipywidgets",
+    "microarray>=0.1.0",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "responses",
+    "ruff",
+    "scanpy>=1.11.5",
+    "tqdm>=4.67.3",
+    "twine",
+    "ty>=0.0.16",
+    "types-requests",
+]
+urls.Source = "https://github.com/harryhaller001/dtangle"
+
+[tool.uv]
+package = true
+
+[tool.ruff]
+line-length = 120
+extend-include = [ "*.ipynb" ]
+format.docstring-code-format = true
+lint.select = [ "B", "BLE", "C4", "D", "E", "F", "I", "RUF100", "TID", "UP", "W" ]
+lint.ignore = [ "B008", "C408", "D100", "D104", "D105", "D107", "D203", "D213", "D400", "D401", "E501", "E731", "E741" ]
+lint.per-file-ignores."*/__init__.py" = [ "F401" ]
+lint.per-file-ignores."docs/*" = [ "I" ]
+lint.per-file-ignores."test/*" = [ "D" ]
+lint.pydocstyle.convention = "google"
+
+[tool.pyproject-fmt]
+column_width = 120            # after how many column width split arrays/dicts into multiple lines, 1 will force always
+indent = 4
+keep_full_version = false     # if false will remove unnecessary trailing ``.0``'s from version specifiers
+max_supported_python = "3.14" # maximum Python version to use when generating version specifiers
+
+[tool.pytest]
+ini_options.minversion = "7.0"
+ini_options.log_format = "%(asctime)s %(levelname)s %(message)s"
+ini_options.log_date_format = "%Y-%m-%d %H:%M:%S"
+ini_options.log_level = "INFO"
+ini_options.log_cli = true
+ini_options.python_files = "test_*.py"
+ini_options.testpaths = [ "tests" ]
+ini_options.xfail_strict = true
+ini_options.addopts = [
+    "--import-mode=importlib",
+    "--cov=src/dtangle",
+    "--cov-report=html:coverage_report",
+    "--cov-report=term",
+]
+
+[tool.coverage]
+run.omit = [ "*/tests/*" ]
+run.source = [ "src/dtangle" ]
+report.exclude_lines = [ "raise" ]
+report.ignore_errors = true
+html.directory = "coverage_report"
+
+[tool.ty]
+src.include = [ "src" ]
+src.exclude = [ "tests" ]
