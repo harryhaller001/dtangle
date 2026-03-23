@@ -13,10 +13,45 @@ from dtangle._input import combine_inputs, extract_input
 from dtangle._markers import get_gamma, process_markers
 
 
+def _resolve_pure_samples_from_obs(
+    adata: AnnData,
+    pure_samples: Mapping[str, Sequence[int | str]] | Sequence[Sequence[int | str]] | None,
+    pure_samples_col: str,
+) -> Mapping[str, Sequence[str]]:
+    if pure_samples is None:
+        raise ValueError("pure_samples must be provided when pure_samples_col is set")
+
+    if not isinstance(pure_samples, Mapping):
+        raise TypeError("When pure_samples_col is set, pure_samples must be a mapping")
+
+    if pure_samples_col not in adata.obs.columns:
+        raise KeyError(f"AnnData .obs has no '{pure_samples_col}' column")
+
+    sample_names = pd.Index(adata.obs_names.astype(str))
+    obs_values = adata.obs[pure_samples_col]
+
+    resolved: dict[str, list[str]] = {}
+    for cell_type, entries in pure_samples.items():
+        if isinstance(entries, str):
+            raise TypeError("Each pure_samples mapping value must be a sequence of obs entries")
+
+        mask = obs_values.isin(entries)  # type: ignore[unresolved-attribute]
+        matched = sample_names[np.asarray(mask, dtype=bool)]
+        if matched.empty:
+            raise ValueError(
+                f"No samples matched pure_samples entries for cell type '{cell_type}' in "
+                f"obs column '{pure_samples_col}'"
+            )
+        resolved[str(cell_type)] = list(matched.astype(str))
+
+    return resolved
+
+
 def deconvolut(
     Y: AnnData | np.ndarray,
     references: AnnData | np.ndarray | None = None,
     pure_samples: Mapping[str, Sequence[int | str]] | Sequence[Sequence[int | str]] | None = None,
+    pure_samples_col: str | None = None,
     n_markers: int | float | Sequence[int | float] | None = None,
     data_type: str | None = None,
     gamma: float | None = None,
@@ -39,6 +74,9 @@ def deconvolut(
             row indices. For AnnData input, values may be row indices or obs names.
             If references is provided and pure_samples is omitted, each reference
             row is treated as a separate cell type.
+        pure_samples_col: Optional AnnData .obs column used to resolve pure_samples
+            values as labels present in that column. When set, pure_samples must be
+            a mapping of cell type to sequence of obs values.
         n_markers: Marker count control. Supports scalar integer, per-type integer
             vector, scalar fraction in (0,1), or per-type fraction vector.
         data_type: Optional data type key used to choose built-in gamma.
@@ -62,6 +100,16 @@ def deconvolut(
 
     if gamma <= 0:
         raise ValueError("gamma must be > 0")
+
+    if pure_samples_col is not None:
+        if references is not None:
+            if not isinstance(references, AnnData):
+                raise TypeError("references must be AnnData when pure_samples_col is set")
+            pure_samples = _resolve_pure_samples_from_obs(references, pure_samples, pure_samples_col)
+        else:
+            if not isinstance(Y, AnnData):
+                raise TypeError("Y must be AnnData when pure_samples_col is set")
+            pure_samples = _resolve_pure_samples_from_obs(Y, pure_samples, pure_samples_col)
 
     y_in = extract_input(Y, layer=layer, var_key=var_key)
     ref_in = extract_input(references, layer=layer, var_key=var_key) if references is not None else None

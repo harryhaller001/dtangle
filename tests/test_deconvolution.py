@@ -90,6 +90,41 @@ def test_anndata_mode_writes_to_obsm_and_uns_inplace() -> None:
     np.testing.assert_array_equal(adata.uns["deconv"]["n_markers"], np.array([1, 1]))
 
 
+def test_anndata_mode_supports_pure_samples_col_mapping() -> None:
+    """Test that pure_samples can be resolved from an obs column."""
+    y = _toy_matrix()
+    adata = AnnData(X=y)
+    adata.obs_names = ["s0", "s1", "s2", "s3"]
+    adata.var_names = ["g0", "g1", "g2"]
+    adata.obs["accession"] = ["L1", "L2", "B1", "B2"]
+
+    result = deconvolut(
+        adata,
+        pure_samples_col="accession",
+        pure_samples={"A": ["L1", "L2"], "B": ["B1", "B2"]},
+        markers={"A": ["g0"], "B": ["g1"]},
+        n_markers=1,
+        key_added="by_obs",
+    )
+
+    assert result is None
+    assert "by_obs" in adata.obsm
+    assert list(adata.obsm["by_obs"].columns) == ["A", "B"]
+
+
+def test_deconvolut_raises_when_pure_samples_col_missing() -> None:
+    """Test that deconvolut raises when pure_samples_col is not in obs."""
+    adata = AnnData(X=_toy_matrix())
+    with pytest.raises(KeyError, match="AnnData .obs has no 'accession' column"):
+        deconvolut(
+            adata,
+            pure_samples_col="accession",
+            pure_samples={"A": ["L1"], "B": ["B1"]},
+            markers={"A": [0], "B": [1]},
+            n_markers=1,
+        )
+
+
 def test_anndata_copy_mode_returns_new_object() -> None:
     """Test that deconvolut returns a new AnnData object when copy=True."""
     y = _toy_matrix()
@@ -118,6 +153,18 @@ def test_deconvolut_raises_for_invalid_gamma() -> None:
     """Test that deconvolut raises a ValueError when gamma is invalid."""
     with pytest.raises(ValueError, match="gamma must be > 0"):
         deconvolut(_toy_matrix(), pure_samples={"A": [0, 1], "B": [2, 3]}, markers={"A": [0], "B": [1]}, gamma=0)
+
+
+def test_deconvolut_raises_for_pure_samples_col_with_array_input() -> None:
+    """Test that deconvolut requires AnnData when pure_samples_col is provided."""
+    with pytest.raises(TypeError, match="Y must be AnnData when pure_samples_col is set"):
+        deconvolut(
+            _toy_matrix(),
+            pure_samples_col="accession",
+            pure_samples={"A": ["L1"], "B": ["B1"]},
+            markers={"A": [0], "B": [1]},
+            n_markers=1,
+        )
 
 
 def test_deconvolut_raises_when_no_references_or_pure_samples() -> None:
