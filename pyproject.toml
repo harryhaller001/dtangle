@@ -34,9 +34,11 @@ optional-dependencies.docs = [
     "sphinx-book-theme",
 ]
 optional-dependencies.test = [
+    "igraph>=1.0.0",
     "ipykernel",
     "ipython",
     "ipywidgets",
+    "leidenalg>=0.11.0",
     "microarray>=0.1.0",
     "pre-commit",
     "pytest",
@@ -53,6 +55,9 @@ urls.Source = "https://github.com/harryhaller001/dtangle"
 
 [tool.uv]
 package = true
+
+[tool.uv.sources]
+microarray = { git = "https://github.com/harryhaller001/microarray.git" }
 
 [tool.ruff]
 line-length = 120
