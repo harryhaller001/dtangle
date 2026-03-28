@@ -39,7 +39,7 @@ def extract_input(data: AnnData | np.ndarray | None, layer: str | None, var_key:
             matrix_source = data.layers[layer]
 
         if sparse.issparse(matrix_source):
-            matrix = np.asarray(matrix_source.toarray(), dtype=float)
+            matrix = np.asarray(sparse.csr_matrix(matrix_source).toarray(), dtype=float)
         else:
             matrix = np.asarray(matrix_source, dtype=float)
 

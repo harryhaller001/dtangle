@@ -17,12 +17,13 @@ def _pure_samples_from_reference_obs(reference: AnnData, reference_annotation_co
     if reference_annotation_col not in reference.obs.columns:
         raise KeyError(f"AnnData .obs has no '{reference_annotation_col}' column")
 
-    labels = reference.obs[reference_annotation_col]
+    labels = np.asarray(reference.obs[reference_annotation_col], dtype=object)
     if pd.isna(labels).any():
         raise ValueError(f"AnnData .obs['{reference_annotation_col}'] contains missing values")
 
     resolved: dict[str, list[str]] = {}
-    for sample_name, label in zip(reference.obs_names.astype(str), labels, strict=True):
+    sample_names = reference.obs_names.astype(str).tolist()
+    for sample_name, label in zip(sample_names, labels.tolist(), strict=True):
         cell_type = str(label)
         resolved.setdefault(cell_type, []).append(str(sample_name))
 
