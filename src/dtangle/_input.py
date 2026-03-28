@@ -8,6 +8,7 @@ from typing import cast
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from scipy import sparse
 
 from dtangle._types import MatrixInput, PreparedInput
 
@@ -18,11 +19,16 @@ def extract_input(data: AnnData | np.ndarray | None, layer: str | None, var_key:
 
     if isinstance(data, AnnData):
         if layer is None:
-            matrix = np.asarray(data.X, dtype=float)
+            matrix_source = data.X
         else:
             if layer not in data.layers:
                 raise KeyError(f"AnnData .layers has no '{layer}' layer")
-            matrix = np.asarray(data.layers[layer], dtype=float)
+            matrix_source = data.layers[layer]
+
+        if sparse.issparse(matrix_source):
+            matrix = np.asarray(matrix_source.toarray(), dtype=float)
+        else:
+            matrix = np.asarray(matrix_source, dtype=float)
 
         if var_key is None:
             gene_names = pd.Index(data.var_names.astype(str))

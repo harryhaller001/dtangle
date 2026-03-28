@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from anndata import AnnData
+from scipy import sparse
 
 from dtangle import deconvolut
 
@@ -173,3 +174,102 @@ def test_deconvolut_raises_for_unknown_marker_gene_name() -> None:
             markers={"A": ["g0"], "B": ["missing_gene"]},
             n_markers=1,
         )
+
+
+def test_deconvolut_handles_sparse_reference_matrix() -> None:
+    """Test that deconvolut accepts sparse reference matrices in AnnData.X."""
+    mixture = _make_mixture_adata()
+    reference = _make_reference_adata()
+    reference.X = sparse.csr_matrix(reference.X)
+
+    result = deconvolut(
+        mixture,
+        reference,
+        "cell_type",
+        markers={"A": ["g0"], "B": ["g1"]},
+        n_markers=1,
+        key_added="sparse_ref",
+    )
+
+    assert result is None
+    assert "sparse_ref" in mixture.obsm
+    assert "sparse_ref" in mixture.uns
+    np.testing.assert_allclose(mixture.obsm["sparse_ref"].to_numpy().sum(axis=1), np.ones(2), rtol=1e-8, atol=1e-8)
+
+
+def test_deconvolut_handles_sparse_mixture_and_reference() -> None:
+    """Test that deconvolut accepts sparse matrices for both mixture and reference."""
+    mixture = _make_mixture_adata()
+    reference = _make_reference_adata()
+    mixture.X = sparse.csr_matrix(mixture.X)
+    reference.X = sparse.csc_matrix(reference.X)
+
+    result = deconvolut(
+        mixture,
+        reference,
+        "cell_type",
+        markers={"A": ["g0"], "B": ["g1"]},
+        n_markers=1,
+        key_added="sparse_both",
+    )
+
+    assert result is None
+    assert "sparse_both" in mixture.obsm
+    np.testing.assert_allclose(mixture.obsm["sparse_both"].to_numpy().sum(axis=1), np.ones(2), rtol=1e-8, atol=1e-8)
+
+
+def test_deconvolut_handles_sparse_layer_input() -> None:
+    """Test that deconvolut accepts sparse matrices stored in AnnData layers."""
+    mixture = _make_mixture_adata()
+    reference = _make_reference_adata()
+    mixture.layers["counts"] = sparse.csr_matrix(mixture.X)
+    reference.layers["counts"] = sparse.csr_matrix(reference.X)
+
+    result = deconvolut(
+        mixture,
+        reference,
+        "cell_type",
+        markers={"A": ["g0"], "B": ["g1"]},
+        n_markers=1,
+        layer="counts",
+        key_added="sparse_layer",
+    )
+
+    assert result is None
+    assert "sparse_layer" in mixture.obsm
+    np.testing.assert_allclose(mixture.obsm["sparse_layer"].to_numpy().sum(axis=1), np.ones(2), rtol=1e-8, atol=1e-8)
+
+
+def test_deconvolut_sparse_and_dense_inputs_match() -> None:
+    """Test that sparse and dense inputs produce identical deconvolution results."""
+    dense_mixture = _make_mixture_adata()
+    dense_reference = _make_reference_adata()
+
+    sparse_mixture = _make_mixture_adata()
+    sparse_reference = _make_reference_adata()
+    sparse_mixture.X = sparse.csr_matrix(sparse_mixture.X)
+    sparse_reference.X = sparse.csr_matrix(sparse_reference.X)
+
+    deconvolut(
+        dense_mixture,
+        dense_reference,
+        "cell_type",
+        markers={"A": ["g0"], "B": ["g1"]},
+        n_markers=1,
+        key_added="dense",
+    )
+    deconvolut(
+        sparse_mixture,
+        sparse_reference,
+        "cell_type",
+        markers={"A": ["g0"], "B": ["g1"]},
+        n_markers=1,
+        key_added="sparse",
+    )
+
+    np.testing.assert_allclose(
+        dense_mixture.obsm["dense"].to_numpy(),
+        sparse_mixture.obsm["sparse"].to_numpy(),
+        rtol=1e-10,
+        atol=1e-10,
+    )
