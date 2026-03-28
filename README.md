@@ -1,5 +1,7 @@
 # dtangle
 
+[![DOI](https://zenodo.org/badge/1188881272.svg)](https://doi.org/10.5281/zenodo.19299115)
+
 Python implementation of **dtangle** for deconvolution of bulk expression profiles using reference cell types.
 Original R package can be found at [https://github.com/gjhunt/dtangle](https://github.com/gjhunt/dtangle).
 
