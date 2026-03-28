@@ -13,6 +13,19 @@ from scipy import sparse
 from dtangle._types import MatrixInput, PreparedInput
 
 
+def _unique_feature_positions(gene_names: pd.Index) -> tuple[pd.Index, np.ndarray]:
+    """Return unique feature names and first-occurrence positions."""
+    first_pos: dict[str, int] = {}
+    for idx, name in enumerate(gene_names):
+        key = str(name)
+        if key not in first_pos:
+            first_pos[key] = idx
+
+    unique_names = pd.Index(list(first_pos.keys()), dtype=str)
+    positions = np.fromiter(first_pos.values(), dtype=int)
+    return unique_names, positions
+
+
 def extract_input(data: AnnData | np.ndarray | None, layer: str | None, var_key: str | None) -> MatrixInput:
     if data is None:
         raise ValueError("Input matrix is required")
@@ -61,12 +74,17 @@ def combine_inputs(
     if ref_input is not None:
         ref = ref_input.matrix
 
-        common = pd.Index(y_gene_names).intersection(ref_input.gene_names)
+        y_unique_names, y_unique_pos = _unique_feature_positions(y_gene_names)
+        ref_unique_names, ref_unique_pos = _unique_feature_positions(ref_input.gene_names)
+
+        common = y_unique_names.intersection(ref_unique_names)
         if common.empty:
             raise ValueError("Y and references do not share any features")
 
-        y_idx = y_gene_names.get_indexer(common)
-        r_idx = ref_input.gene_names.get_indexer(common)
+        y_pos_lookup = pd.Series(y_unique_pos, index=y_unique_names)
+        ref_pos_lookup = pd.Series(ref_unique_pos, index=ref_unique_names)
+        y_idx = y_pos_lookup.loc[common].to_numpy(dtype=int)
+        r_idx = ref_pos_lookup.loc[common].to_numpy(dtype=int)
         y = y[:, y_idx]
         ref = ref[:, r_idx]
 

@@ -273,3 +273,43 @@ def test_deconvolut_sparse_and_dense_inputs_match() -> None:
         rtol=1e-10,
         atol=1e-10,
     )
+
+
+def test_deconvolut_handles_duplicate_reference_feature_names() -> None:
+    """Test that deconvolut tolerates duplicated feature names in references."""
+    mixture = _make_mixture_adata()
+    reference = _make_reference_adata()
+    reference.var_names = ["g0", "g1", "g1"]
+
+    result = deconvolut(
+        mixture,
+        reference,
+        "cell_type",
+        markers={"A": ["g0"], "B": ["g1"]},
+        n_markers=1,
+        key_added="dup_ref",
+    )
+
+    assert result is None
+    assert "dup_ref" in mixture.obsm
+    assert list(mixture.obsm["dup_ref"].columns) == ["A", "B"]
+
+
+def test_deconvolut_handles_duplicate_mixture_feature_names() -> None:
+    """Test that deconvolut tolerates duplicated feature names in mixtures."""
+    mixture = _make_mixture_adata()
+    reference = _make_reference_adata()
+    mixture.var_names = ["g0", "g1", "g1"]
+
+    result = deconvolut(
+        mixture,
+        reference,
+        "cell_type",
+        markers={"A": ["g0"], "B": ["g1"]},
+        n_markers=1,
+        key_added="dup_mix",
+    )
+
+    assert result is None
+    assert "dup_mix" in mixture.obsm
+    assert list(mixture.obsm["dup_mix"].columns) == ["A", "B"]
