@@ -13,45 +13,29 @@ from dtangle._input import combine_inputs, extract_input
 from dtangle._markers import get_gamma, process_markers
 
 
-def _resolve_pure_samples_from_obs(
-    adata: AnnData,
-    pure_samples: Mapping[str, Sequence[int | str]] | Sequence[Sequence[int | str]] | None,
-    pure_samples_col: str,
-) -> Mapping[str, Sequence[str]]:
-    if pure_samples is None:
-        raise ValueError("pure_samples must be provided when pure_samples_col is set")
+def _pure_samples_from_reference_obs(reference: AnnData, reference_annotation_col: str) -> Mapping[str, Sequence[str]]:
+    if reference_annotation_col not in reference.obs.columns:
+        raise KeyError(f"AnnData .obs has no '{reference_annotation_col}' column")
 
-    if not isinstance(pure_samples, Mapping):
-        raise TypeError("When pure_samples_col is set, pure_samples must be a mapping")
-
-    if pure_samples_col not in adata.obs.columns:
-        raise KeyError(f"AnnData .obs has no '{pure_samples_col}' column")
-
-    sample_names = pd.Index(adata.obs_names.astype(str))
-    obs_values = adata.obs[pure_samples_col]
+    labels = reference.obs[reference_annotation_col]
+    if pd.isna(labels).any():
+        raise ValueError(f"AnnData .obs['{reference_annotation_col}'] contains missing values")
 
     resolved: dict[str, list[str]] = {}
-    for cell_type, entries in pure_samples.items():
-        if isinstance(entries, str):
-            raise TypeError("Each pure_samples mapping value must be a sequence of obs entries")
+    for sample_name, label in zip(reference.obs_names.astype(str), labels, strict=True):
+        cell_type = str(label)
+        resolved.setdefault(cell_type, []).append(str(sample_name))
 
-        mask = obs_values.isin(entries)  # type: ignore[unresolved-attribute]
-        matched = sample_names[np.asarray(mask, dtype=bool)]
-        if matched.empty:
-            raise ValueError(
-                f"No samples matched pure_samples entries for cell type '{cell_type}' in "
-                f"obs column '{pure_samples_col}'"
-            )
-        resolved[str(cell_type)] = list(matched.astype(str))
+    if not resolved:
+        raise ValueError("references AnnData must contain at least one sample")
 
     return resolved
 
 
 def deconvolut(
-    Y: AnnData | np.ndarray,
-    references: AnnData | np.ndarray | None = None,
-    pure_samples: Mapping[str, Sequence[int | str]] | Sequence[Sequence[int | str]] | None = None,
-    pure_samples_col: str | None = None,
+    Y: AnnData,
+    references: AnnData,
+    reference_annotation_col: str,
     n_markers: int | float | Sequence[int | float] | None = None,
     data_type: str | None = None,
     gamma: float | None = None,
@@ -63,20 +47,14 @@ def deconvolut(
     var_key: str | None = None,
     key_added: str = "dtangle",
     copy: bool = False,
-) -> dict[str, object] | AnnData | None:
+) -> AnnData | None:
     """Estimate cell type mixing proportions using a dtangle-style estimator.
 
     Args:
-        Y: Mixture expression matrix or AnnData with shape (samples, genes).
-        references: Optional reference expression matrix. If provided, references
-            are prepended to Y following dtangle R behavior.
-        pure_samples: Cell type to pure-sample mapping. For array input this is
-            row indices. For AnnData input, values may be row indices or obs names.
-            If references is provided and pure_samples is omitted, each reference
-            row is treated as a separate cell type.
-        pure_samples_col: Optional AnnData .obs column used to resolve pure_samples
-            values as labels present in that column. When set, pure_samples must be
-            a mapping of cell type to sequence of obs values.
+        Y: Mixture expression AnnData with shape (samples, genes).
+        references: Reference expression AnnData where each row is a pure sample.
+        reference_annotation_col: AnnData .obs column in references containing cell
+            type annotations used to group pure samples.
         n_markers: Marker count control. Supports scalar integer, per-type integer
             vector, scalar fraction in (0,1), or per-type fraction vector.
         data_type: Optional data type key used to choose built-in gamma.
@@ -91,28 +69,24 @@ def deconvolut(
         copy: Return modified AnnData in AnnData mode.
 
     Returns:
-        For array input: dict with keys estimates, markers, n_markers, gamma.
-        For AnnData input: None (in-place) or AnnData if copy=True. Results are
-        written to adata.obsm[key_added] and adata.uns[key_added].
+        None (in-place) or AnnData if copy=True. Results are written to
+        adata.obsm[key_added] and adata.uns[key_added].
     """
+    if not isinstance(Y, AnnData):
+        raise TypeError("Y must be AnnData")
+    if not isinstance(references, AnnData):
+        raise TypeError("references must be AnnData")
+
     if gamma is None:
         gamma = get_gamma(data_type)
 
     if gamma <= 0:
         raise ValueError("gamma must be > 0")
 
-    if pure_samples_col is not None:
-        if references is not None:
-            if not isinstance(references, AnnData):
-                raise TypeError("references must be AnnData when pure_samples_col is set")
-            pure_samples = _resolve_pure_samples_from_obs(references, pure_samples, pure_samples_col)
-        else:
-            if not isinstance(Y, AnnData):
-                raise TypeError("Y must be AnnData when pure_samples_col is set")
-            pure_samples = _resolve_pure_samples_from_obs(Y, pure_samples, pure_samples_col)
+    pure_samples = _pure_samples_from_reference_obs(references, reference_annotation_col)
 
     y_in = extract_input(Y, layer=layer, var_key=var_key)
-    ref_in = extract_input(references, layer=layer, var_key=var_key) if references is not None else None
+    ref_in = extract_input(references, layer=layer, var_key=var_key)
 
     prepared, pure_input_rows = combine_inputs(y_in, ref_in, pure_samples)
 
@@ -130,34 +104,20 @@ def deconvolut(
     baseline = baseline_exprs(prepared.y, prepared.pure_samples, marker_list, summary_fn=summary_fn)
     estimates_all = est_phats(prepared.y, marker_list, baseline, gamma=gamma, summary_fn=summary_fn)
 
-    if references is not None:
-        keep_rows = np.ones(estimates_all.shape[0], dtype=bool)
-        keep_rows[pure_input_rows] = False
-        estimates = estimates_all[keep_rows, :]
-        sample_names = y_in.sample_names
-    else:
-        estimates = estimates_all
-        sample_names = y_in.sample_names
+    keep_rows = np.ones(estimates_all.shape[0], dtype=bool)
+    keep_rows[pure_input_rows] = False
+    estimates = estimates_all[keep_rows, :]
+    sample_names = y_in.sample_names
 
     estimates_df = pd.DataFrame(estimates, index=pd.Index(sample_names), columns=pd.Index(prepared.cell_types))
 
-    out: dict[str, object] = {
-        "estimates": estimates_df,
-        "markers": marker_list,
+    adata = Y.copy() if copy else Y
+    adata.obsm[key_added] = estimates_df
+    adata.uns[key_added] = {
+        "markers": {ct: list(vals) for ct, vals in marker_list.items()},
         "n_markers": np.asarray(marker_counts, dtype=int),
         "gamma": float(gamma),
+        "marker_method": marker_method,
+        "cell_types": prepared.cell_types,
     }
-
-    if isinstance(Y, AnnData):
-        adata = Y.copy() if copy else Y
-        adata.obsm[key_added] = estimates_df
-        adata.uns[key_added] = {
-            "markers": {ct: list(vals) for ct, vals in marker_list.items()},
-            "n_markers": np.asarray(marker_counts, dtype=int),
-            "gamma": float(gamma),
-            "marker_method": marker_method,
-            "cell_types": prepared.cell_types,
-        }
-        return adata if copy else None
-
-    return out
+    return adata if copy else None
