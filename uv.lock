@@ -715,6 +715,7 @@ dependencies = [
     { name = "anndata" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "scanpro" },
     { name = "scipy" },
 ]
 
@@ -771,6 +772,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "responses", marker = "extra == 'test'" },
     { name = "ruff", marker = "extra == 'test'" },
+    { name = "scanpro", specifier = ">=0.4.1" },
     { name = "scanpy", marker = "extra == 'test'", specifier = ">=1.11.5" },
     { name = "scipy", specifier = ">=1.17.1" },
     { name = "sphinx", marker = "extra == 'docs'" },
@@ -3012,6 +3014,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/2b/e9/346d4d3fffc6871125e877dae8d9a1966b254fbd92a50f8561078b88b099/ruff-0.15.7-py3-none-win_amd64.whl", hash = "sha256:4d53d712ddebcd7dace1bc395367aec12c057aacfe9adbb6d832302575f4d3a1", size = 11755839, upload-time = "2026-03-19T16:26:19.897Z" },
     { url = "https://files.pythonhosted.org/packages/8f/e8/726643a3ea68c727da31570bde48c7a10f1aa60eddd628d94078fec586ff/ruff-0.15.7-py3-none-win_arm64.whl", hash = "sha256:18e8d73f1c3fdf27931497972250340f92e8c861722161a9caeb89a58ead6ed2", size = 11023304, upload-time = "2026-03-19T16:26:51.669Z" },
 ]
+
+[[package]]
+name = "scanpro"
+version = "0.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "patsy" },
+    { name = "seaborn" },
+    { name = "statsmodels" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/46/0c/06402fad2efa6387f2a431ad668ba04d39ca88554aff00df40e15c3a21dd/scanpro-0.4.1.tar.gz", hash = "sha256:f26b2a2ae106da7cab0684b2247a0e1230c6c299c28dc20ea2308615a698ed79", size = 39313, upload-time = "2026-02-26T14:55:36.352Z" }
 
 [[package]]
 name = "scanpy"
