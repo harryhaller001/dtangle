@@ -6,7 +6,7 @@
 dtangle
 =======
 
-Lorem
+Python implementation of dtangle for deconvolution of bulk RNA-seq and microarray mixtures.
 
 
 Get started
@@ -15,6 +15,11 @@ Get started
 You can install ``dtangle`` with ``pip``::
 
     pip install dtangle
+
+Minimal example::
+
+    from dtangle import deconvolut
+    deconvolut(adata, adata_references, "cell_type")
 
 
 For more details, see :ref:`install`.
@@ -42,6 +47,7 @@ If you found a bug, please use the `Issue tracker <https://github.com/harryhalle
     :glob:
 
     notebooks/vignette_basic
+    notebooks/vignette_brain
 
 
 .. toctree::
