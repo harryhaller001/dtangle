@@ -9,7 +9,7 @@ Original R package can be found at [https://github.com/gjhunt/dtangle](https://g
 pip install dtangle
 ```
 
-Requires Python >=3.11.
+Requires `python>=3.11`.
 
 ## Quick Start
 
@@ -26,8 +26,8 @@ deconvolut(
 )
 
 # Results are written to:
-# > mixture_adata.obsm["dtangle"]
-# > mixture_adata.uns["dtangle"]
+# mixture_adata.obsm["dtangle"]
+# mixture_adata.uns["dtangle"]
 ```
 
 ## Development

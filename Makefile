@@ -29,8 +29,6 @@ help: ## This help.
 
 .PHONY : install
 install: ## install all python dependencies
-
-# Install dev dependencies
 	@$(UV_OPT) sync --all-extras
 
 
@@ -38,7 +36,6 @@ install: ## install all python dependencies
 
 .PHONY : build
 build: ## Twine package upload and checks
-
 	@$(UV_OPT) build
 
 # Check package using twine

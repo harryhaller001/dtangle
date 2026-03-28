@@ -68,10 +68,10 @@ lint.per-file-ignores."test/*" = [ "D" ]
 lint.pydocstyle.convention = "google"
 
 [tool.pyproject-fmt]
-column_width = 120            # after how many column width split arrays/dicts into multiple lines, 1 will force always
+column_width = 120
 indent = 4
-keep_full_version = false     # if false will remove unnecessary trailing ``.0``'s from version specifiers
-max_supported_python = "3.14" # maximum Python version to use when generating version specifiers
+keep_full_version = false
+max_supported_python = "3.14"
 
 [tool.pytest]
 ini_options.minversion = "7.0"
@@ -92,10 +92,9 @@ ini_options.addopts = [
 [tool.coverage]
 run.omit = [ "*/tests/*" ]
 run.source = [ "src/dtangle" ]
-report.exclude_lines = [ "raise" ]
 report.ignore_errors = true
 html.directory = "coverage_report"
 
 [tool.ty]
 src.include = [ "src" ]
-src.exclude = [ "tests" ]
+src.exclude = [ "tests", "docs" ]
