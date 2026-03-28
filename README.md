@@ -1,6 +1,9 @@
 # dtangle
 
 [![DOI](https://zenodo.org/badge/1188881272.svg)](https://doi.org/10.5281/zenodo.19299115)
+![PyPI - Version](https://img.shields.io/pypi/v/dtangle)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dtangle)
+![Read the Docs](https://img.shields.io/readthedocs/dtangle)
 
 Python implementation of **dtangle** for deconvolution of bulk expression profiles using reference cell types.
 Original R package can be found at [https://github.com/gjhunt/dtangle](https://github.com/gjhunt/dtangle).

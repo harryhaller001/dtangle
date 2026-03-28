@@ -51,6 +51,7 @@ optional-dependencies.test = [
     "ty>=0.0.16",
     "types-requests",
 ]
+urls.Documentation = "https://dtangle.readthedocs.io/en/latest/"
 urls.Source = "https://github.com/harryhaller001/dtangle"
 
 [tool.uv]
