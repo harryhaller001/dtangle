@@ -39,7 +39,7 @@ optional-dependencies.test = [
     "ipython",
     "ipywidgets",
     "leidenalg>=0.11.0",
-    "microarray>=0.1.0",
+    "microarray>=0.2.0",
     "pre-commit",
     "pytest",
     "pytest-cov",

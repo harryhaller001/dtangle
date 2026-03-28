@@ -31,7 +31,7 @@ help: ## This help.
 install: ## install all python dependencies
 
 # Install dev dependencies
-# 	@$(UV_OPT) sync --all-extras
+	@$(UV_OPT) sync --all-extras
 
 
 
