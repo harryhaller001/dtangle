@@ -56,9 +56,6 @@ urls.Source = "https://github.com/harryhaller001/dtangle"
 [tool.uv]
 package = true
 
-[tool.uv.sources]
-microarray = { git = "https://github.com/harryhaller001/microarray.git" }
-
 [tool.ruff]
 line-length = 120
 extend-include = [ "*.ipynb" ]
