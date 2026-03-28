@@ -4,6 +4,7 @@
 BASE_DIR		= ${PWD}
 
 TEST_DIR		= $(BASE_DIR)/tests
+DOCS_DIR		= $(BASE_DIR)/docs
 
 UV_OPT			= uv
 UV_RUN_OPT		= $(UV_OPT) run
@@ -66,3 +67,14 @@ typing: ## Run static code analysis
 .PHONY: check ## Run all checks (always before committing!)
 check: install format typing testing build
 
+
+
+
+.PHONY: docs
+docs: ## Build sphinx docs
+
+	@$(SPHINX_OPT) -M doctest $(DOCS_DIR) $(DOCS_DIR)/_build
+	@$(SPHINX_OPT) -M coverage $(DOCS_DIR) $(DOCS_DIR)/_build
+
+# Build HTML version
+	@$(SPHINX_OPT) -M html $(DOCS_DIR) $(DOCS_DIR)/_build
