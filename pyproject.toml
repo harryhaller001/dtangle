@@ -4,7 +4,7 @@ requires = [ "uv-build>=0.9.28,<0.10" ]
 
 [project]
 name = "dtangle"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python implementation of dtangle (Deconvolution of microarray and bulk RNASeq data)"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "GPL-3.0-or-later"
@@ -39,7 +39,6 @@ optional-dependencies.test = [
     "ipython",
     "ipywidgets",
     "leidenalg>=0.11.0",
-    "microarray>=0.2.0",
     "pre-commit",
     "pytest",
     "pytest-cov",
