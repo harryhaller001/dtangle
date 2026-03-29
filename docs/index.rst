@@ -48,6 +48,7 @@ If you found a bug, please use the `Issue tracker <https://github.com/harryhalle
 
     notebooks/vignette_basic
     notebooks/vignette_brain
+    notebooks/vignette_pbmc3k
 
 
 .. toctree::
