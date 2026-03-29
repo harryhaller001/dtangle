@@ -112,10 +112,14 @@ def deconvolut(
 
     estimates_df = pd.DataFrame(estimates, index=pd.Index(sample_names), columns=pd.Index(prepared.cell_types))
 
+    marker_names = {
+        ct: prepared.gene_names[np.asarray(vals, dtype=int)].astype(str).tolist() for ct, vals in marker_list.items()
+    }
+
     adata = Y.copy() if copy else Y
     adata.obsm[key_added] = estimates_df
     adata.uns[key_added] = {
-        "markers": {ct: list(vals) for ct, vals in marker_list.items()},
+        "markers": marker_names,
         "n_markers": np.asarray(marker_counts, dtype=int),
         "gamma": float(gamma),
         "marker_method": marker_method,

@@ -4,6 +4,7 @@
 /.ruff_cache
 /coverage_report
 /dist
+/docs/notebooks/data
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

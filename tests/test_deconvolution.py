@@ -63,6 +63,7 @@ def test_deconvolut_writes_to_obsm_and_uns_inplace() -> None:
     assert "deconv" in mixture.uns
     assert list(mixture.obsm["deconv"].index) == ["m0", "m1"]
     assert list(mixture.obsm["deconv"].columns) == ["A", "B"]
+    assert mixture.uns["deconv"]["markers"] == {"A": ["g0"], "B": ["g1"]}
     np.testing.assert_array_equal(mixture.uns["deconv"]["n_markers"], np.array([1, 1]))
     np.testing.assert_allclose(mixture.obsm["deconv"].to_numpy().sum(axis=1), np.ones(2), rtol=1e-8, atol=1e-8)
 
